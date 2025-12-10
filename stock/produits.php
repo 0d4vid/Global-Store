@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stock = $_POST['stock_actuel'];
     $seuil = $_POST['seuil_alert'];
     $id_cat = $_POST['id_cat'];
+    $image_url = $_POST['image_url'] ?? null; // Get image_url from form
 
     if (empty($nom) || empty($prix_vente) || empty($prix_achat) || empty($stock) || empty($seuil) || empty($id_cat)) {
         $feedback_message = "Veuillez remplir tous les champs obligatoires.";
@@ -38,12 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             if ($id_prod) { // Update
-                $stmt = $pdo->prepare("CALL modifier_produit(?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$id_prod, $nom, $description, $prix_vente, $prix_achat, $stock, $seuil, $id_cat]);
+                $stmt = $pdo->prepare("CALL modifier_produit(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$id_prod, $nom, $description, $prix_vente, $prix_achat, $stock, $seuil, $id_cat, $image_url]);
                 $feedback_message = "Produit modifié avec succès !";
             } else { // Add
-                $stmt = $pdo->prepare("CALL ajouter_produit(?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$nom, $description, $prix_vente, $prix_achat, $stock, $seuil, $id_cat]);
+                $stmt = $pdo->prepare("CALL ajouter_produit(?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$nom, $description, $prix_vente, $prix_achat, $stock, $seuil, $id_cat, $image_url]);
                 $feedback_message = "Produit ajouté avec succès !";
             }
             $feedback_type = 'success';
@@ -145,6 +146,10 @@ try {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="md:col-span-2">
+                    <label for="image_url" class="block mb-2 text-sm font-medium text-gray-900">URL de l'image (Optionnel)</label>
+                    <input type="url" id="image_url" name="image_url" value="<?php echo htmlspecialchars($edit_product['image_url'] ?? ''); ?>" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5">
+                </div>
             </div>
             <div class="flex items-center mt-6">
                 <button type="submit" name="submit_product" class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
@@ -163,6 +168,7 @@ try {
         <table class="w-full text-sm text-left text-gray-500">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                 <tr>
+                    <th scope="col" class="px-6 py-3">Image</th>
                     <th scope="col" class="px-6 py-3">Nom</th>
                     <th scope="col" class="px-6 py-3">Catégorie</th>
                     <th scope="col" class="px-6 py-3">Prix Vente</th>
@@ -173,11 +179,18 @@ try {
             <tbody>
                 <?php if (empty($products)): ?>
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center">Aucun produit trouvé.</td>
+                        <td colspan="6" class="px-6 py-4 text-center">Aucun produit trouvé.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($products as $product): ?>
                         <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <?php if (!empty($product['image_url'])): ?>
+                                    <img src="<?php echo htmlspecialchars($product['image_url']); ?>" alt="<?php echo htmlspecialchars($product['nom']); ?>" class="h-10 w-10 object-cover rounded-full">
+                                <?php else: ?>
+                                    <div class="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs">No img</div>
+                                <?php endif; ?>
+                            </td>
                             <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                 <?php echo htmlspecialchars($product['nom']); ?>
                             </th>

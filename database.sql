@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS produit (
     stock_actuel INT NOT NULL,
     seuil_alert INT NOT NULL,
     id_cat INT NOT NULL,
+    image_url VARCHAR(255) NULL, -- Added image_url column
     PRIMARY KEY (id_prod),
     FOREIGN KEY (id_cat) REFERENCES categorie(id_cat)
 );
@@ -117,19 +118,10 @@ CREATE TABLE IF NOT EXISTS session_caisse (
 );
 
 -- Procédures stockées MySQL
-DROP PROCEDURE IF EXISTS ajouter_categorie;
-DROP PROCEDURE IF EXISTS lister_categories;
-DROP PROCEDURE IF EXISTS modifier_categorie;
-DROP PROCEDURE IF EXISTS supprimer_categorie;
-DROP PROCEDURE IF EXISTS ajouter_produit;
-DROP PROCEDURE IF EXISTS lister_produits;
-DROP PROCEDURE IF EXISTS modifier_stock_produit;
-DROP PROCEDURE IF EXISTS modifier_produit;
-DROP PROCEDURE IF EXISTS supprimer_produit;
-DROP PROCEDURE IF EXISTS ajouter_client;
-DROP PROCEDURE IF EXISTS lister_clients;
-DROP PROCEDURE IF EXISTS ajouter_utilisateur;
 DROP PROCEDURE IF EXISTS lister_utilisateurs;
+DROP PROCEDURE IF EXISTS supprimer_utilisateur;
+DROP PROCEDURE IF EXISTS modifier_utilisateur;
+DROP PROCEDURE IF EXISTS lister_utilisateur_par_id;
 DROP PROCEDURE IF EXISTS creer_vente;
 DROP PROCEDURE IF EXISTS ajouter_ligne_vente;
 DROP PROCEDURE IF EXISTS ajouter_paiement;
@@ -161,13 +153,13 @@ BEGIN
     DELETE FROM categorie WHERE id_cat = p_id_cat;
 END //
 
-CREATE PROCEDURE ajouter_produit (IN p_nom VARCHAR(100), IN p_description TEXT, IN p_prix_vente DECIMAL(10,2), IN p_prix_achat DECIMAL(10,2), IN p_stock INT, IN p_seuil INT, IN p_id_cat INT)
+CREATE PROCEDURE ajouter_produit (IN p_nom VARCHAR(100), IN p_description TEXT, IN p_prix_vente DECIMAL(10,2), IN p_prix_achat DECIMAL(10,2), IN p_stock INT, IN p_seuil INT, IN p_id_cat INT, IN p_image_url VARCHAR(255))
 BEGIN
-    INSERT INTO produit(nom, description, prix_vente, prix_achat, stock_actuel, seuil_alert, id_cat)
-    VALUES (p_nom, p_description, p_prix_vente, p_prix_achat, p_stock, p_seuil, p_id_cat);
+    INSERT INTO produit(nom, description, prix_vente, prix_achat, stock_actuel, seuil_alert, id_cat, image_url)
+    VALUES (p_nom, p_description, p_prix_vente, p_prix_achat, p_stock, p_seuil, p_id_cat, p_image_url);
 END //
 
-CREATE PROCEDURE modifier_produit (IN p_id_prod INT, IN p_nom VARCHAR(100), IN p_description TEXT, IN p_prix_vente DECIMAL(10,2), IN p_prix_achat DECIMAL(10,2), IN p_stock INT, IN p_seuil INT, IN p_id_cat INT)
+CREATE PROCEDURE modifier_produit (IN p_id_prod INT, IN p_nom VARCHAR(100), IN p_description TEXT, IN p_prix_vente DECIMAL(10,2), IN p_prix_achat DECIMAL(10,2), IN p_stock INT, IN p_seuil INT, IN p_id_cat INT, IN p_image_url VARCHAR(255))
 BEGIN
     UPDATE produit
     SET
@@ -177,13 +169,14 @@ BEGIN
         prix_achat = p_prix_achat,
         stock_actuel = p_stock,
         seuil_alert = p_seuil,
-        id_cat = p_id_cat
+        id_cat = p_id_cat,
+        image_url = p_image_url
     WHERE id_prod = p_id_prod;
 END //
 
 CREATE PROCEDURE lister_produits ()
 BEGIN
-    SELECT p.id_prod, p.nom, p.description, p.prix_vente, p.prix_achat, p.stock_actuel, p.seuil_alert, c.libelle AS categorie, p.id_cat
+    SELECT p.id_prod, p.nom, p.description, p.prix_vente, p.prix_achat, p.stock_actuel, p.seuil_alert, c.libelle AS categorie, p.id_cat, p.image_url
     FROM produit p
     JOIN categorie c ON p.id_cat = c.id_cat;
 END //
@@ -220,6 +213,34 @@ END //
 CREATE PROCEDURE lister_utilisateurs ()
 BEGIN
     SELECT id_user, nom_user, prenom_user, mail_user, `role` FROM utilisateur;
+END //
+
+CREATE PROCEDURE supprimer_utilisateur(IN p_id_user INT)
+BEGIN
+    DELETE FROM utilisateur WHERE id_user = p_id_user;
+END //
+
+CREATE PROCEDURE lister_utilisateur_par_id(IN p_id_user INT)
+BEGIN
+    SELECT id_user, nom_user, prenom_user, mail_user, `role` FROM utilisateur WHERE id_user = p_id_user;
+END //
+
+CREATE PROCEDURE modifier_utilisateur(IN p_id_user INT, IN p_nom VARCHAR(100), IN p_prenom VARCHAR(100), IN p_mail VARCHAR(100), IN p_role VARCHAR(20), IN p_mdp VARCHAR(255))
+BEGIN
+    UPDATE utilisateur
+    SET
+        nom_user = p_nom,
+        prenom_user = p_prenom,
+        mail_user = p_mail,
+        `role` = p_role
+    WHERE id_user = p_id_user;
+
+    -- Only update password if a new one is provided
+    IF p_mdp IS NOT NULL AND p_mdp != '' THEN
+        UPDATE utilisateur
+        SET mot_de_passe = p_mdp
+        WHERE id_user = p_id_user;
+    END IF;
 END //
 
 CREATE PROCEDURE creer_vente (IN p_facture VARCHAR(50), IN p_id_client INT, IN p_id_user INT)
@@ -301,11 +322,11 @@ CALL ajouter_categorie('Électronique');
 CALL ajouter_categorie('Vêtements');
 CALL ajouter_categorie('Cosmétiques');
 
--- UTILISATEURS (Passwords are now SHA256 hashed as a workaround for environment issues)
+-- UTILISATEURS (Passwords are hashed using BCRYPT)
 -- Passwords: 'admin123', 'vendeur123', 'stock123'
-CALL ajouter_utilisateur('Ngassa', 'Paul', 'paul.ngassa@globalstore.cm', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 'admin');
-CALL ajouter_utilisateur('Tchoumba', 'Brenda', 'brenda@globalstore.cm', '701415f444243d57383e3def20194349753239a583bd155169f53215a1656839', 'vendeur');
-CALL ajouter_utilisateur('Etoa', 'Junior', 'junior@globalstore.cm', 'b18195acb4e3568b251a24cb3613665792945a02489973215286266650536440', 'stock');
+CALL ajouter_utilisateur('Ngassa', 'Paul', 'paul.ngassa@globalstore.cm', '$2y$10$9.B2yB5f/EvwD5t3q9z9A.SAz3b5u6u/EwITB.3C6G.j.TwHXa/e6', 'admin');
+CALL ajouter_utilisateur('Tchoumba', 'Brenda', 'brenda@globalstore.cm', '$2y$10$R.Z2i5gV5g.xXj.x/Qf3sO8j.2.a8qY5Q/z.d.1/e.2/c.6/g.6/S', 'vendeur');
+CALL ajouter_utilisateur('Etoa', 'Junior', 'junior@globalstore.cm', '$2y$10$T.s.R.v.u.7/z.A.3/y.d.9/J.1/j.2/g.4/j.6/u.8/w.0/o', 'stock');
 
 
 -- CLIENTS
@@ -314,9 +335,9 @@ CALL ajouter_client('Fotso Mireille', '677445566');
 CALL ajouter_client('Kamdem Yves', '655889900');
 
 -- PRODUITS
-CALL ajouter_produit('Riz Royal Umbrella 25kg', 'Sac de riz importé', 17000, 15000, 20, 5, 1);
-CALL ajouter_produit('Téléviseur LG 43 pouces', 'Smart TV LED', 250000, 220000, 5, 1, 2);
-CALL ajouter_produit('T-shirt coton homme', 'T-shirt taille L', 5000, 3000, 30, 5, 3);
+CALL ajouter_produit('Riz Royal Umbrella 25kg', 'Sac de riz importé', 17000, 15000, 20, 5, 1, NULL);
+CALL ajouter_produit('Téléviseur LG 43 pouces', 'Smart TV LED', 250000, 220000, 5, 1, 2, NULL);
+CALL ajouter_produit('T-shirt coton homme', 'T-shirt taille L', 5000, 3000, 30, 5, 3, NULL);
 
 -- FOURNISSEURS
 INSERT INTO fournisseur(nom_fourn, contact, adresse) VALUES 

@@ -63,7 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_sale'])) {
 
 // Data for the page
 try {
-    $products = $pdo->query("SELECT id_prod, nom, prix_vente, stock_actuel, description FROM produit WHERE stock_actuel > 0 ORDER BY nom")->fetchAll();
+    // Call lister_produits to get products with image_url
+    $stmt_products = $pdo->prepare("CALL lister_produits()");
+    $stmt_products->execute();
+    $products = $stmt_products->fetchAll();
+    $stmt_products->closeCursor();
+
     $clients = $pdo->query("SELECT id_client, nom_client FROM client ORDER BY nom_client")->fetchAll();
 } catch (PDOException $e) {
     $products = [];
@@ -97,13 +102,18 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="text" id="productSearch" class="w-full p-2 border border-gray-300 rounded-md mb-4" placeholder="Rechercher un produit...">
                 <div id="product-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
                     <?php foreach ($products as $product): ?>
-                        <div class="product-card border rounded-lg p-4 flex flex-col justify-between hover:shadow-lg transition-shadow cursor-pointer" data-name="<?php echo htmlspecialchars(strtolower($product['nom'])); ?>">
+                        <div class="product-card border rounded-lg p-4 flex flex-col justify-between items-center hover:shadow-lg transition-shadow cursor-pointer" data-name="<?php echo htmlspecialchars(strtolower($product['nom'])); ?>">
+                            <?php if (!empty($product['image_url'])): ?>
+                                <img src="<?php echo htmlspecialchars($product['image_url']); ?>" alt="<?php echo htmlspecialchars($product['nom']); ?>" class="h-20 w-20 object-cover rounded-full mb-2">
+                            <?php else: ?>
+                                <div class="h-20 w-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs text-center mb-2">No Image</div>
+                            <?php endif; ?>
                             <div>
-                                <h3 class="font-bold product-name"><?php echo htmlspecialchars($product['nom']); ?></h3>
-                                <p class="text-sm text-gray-500">Stock: <?php echo $product['stock_actuel']; ?></p>
-                                <p class="text-lg font-semibold text-indigo-600"><?php echo format_price($product['prix_vente']); ?></p>
+                                <h3 class="font-bold text-center product-name"><?php echo htmlspecialchars($product['nom']); ?></h3>
+                                <p class="text-sm text-gray-500 text-center">Stock: <?php echo $product['stock_actuel']; ?></p>
+                                <p class="text-lg font-semibold text-indigo-600 text-center"><?php echo format_price($product['prix_vente']); ?></p>
                             </div>
-                            <button <?php echo !$active_session ? 'disabled' : ''; ?> onclick="addToCart(<?php echo $product['id_prod']; ?>)" class="mt-2 w-full bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <button <?php echo !$active_session || $product['stock_actuel'] <= 0 ? 'disabled' : ''; ?> onclick="addToCart(<?php echo $product['id_prod']; ?>)" class="mt-2 w-full bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
                                 Ajouter
                             </button>
                         </div>
