@@ -15,8 +15,6 @@ if ($role === 'admin') {
     $nav_links = [
         "Dashboard" => "{$base_url}/admin/dashboard.php",
         "Utilisateurs" => "{$base_url}/admin/utilisateurs.php",
-        "Produits" => "{$base_url}/admin/produits.php",
-        "Catégories" => "{$base_url}/admin/categories.php",
     ];
 } elseif ($role === 'vendeur') {
     $nav_links = [
@@ -28,6 +26,8 @@ if ($role === 'admin') {
 } elseif ($role === 'stock') {
     $nav_links = [
         "Inventaire" => "{$base_url}/stock/inventaire.php",
+        "Produits" => "{$base_url}/stock/produits.php",
+        "Catégories" => "{$base_url}/stock/categories.php",
         "Réapprovisionnement" => "{$base_url}/stock/reappro.php",
         "Fournisseurs" => "{$base_url}/stock/fournisseurs.php",
     ];
