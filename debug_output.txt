@@ -1,0 +1,8 @@
+Password entered:
+string(8) "admin123"
+User record found in database:
+array(6) { ["id_user"]=> int(1) ["nom_user"]=> string(6) "Ngassa" ["prenom_user"]=> string(4) "Paul" ["mail_user"]=> string(26) "paul.ngassa@globalstore.cm" ["mot_de_passe"]=> string(60) "$2y$10$9.B2yB5f/EvwD5t3q9z9A.SAz3b5u6u/EwITB.3C6G.j.TwHXa/e6" ["role"]=> string(5) "admin" }
+Password hash from database:
+string(60) "$2y$10$9.B2yB5f/EvwD5t3q9z9A.SAz3b5u6u/EwITB.3C6G.j.TwHXa/e6"
+Result of password_verify():
+bool(false) 
