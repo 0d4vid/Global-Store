@@ -12,7 +12,6 @@ if (session_status() === PHP_SESSION_NONE) {
     <title>Global Store Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
 </head>
 <body class="bg-gray-100">
     <div class="min-h-screen flex flex-col">
